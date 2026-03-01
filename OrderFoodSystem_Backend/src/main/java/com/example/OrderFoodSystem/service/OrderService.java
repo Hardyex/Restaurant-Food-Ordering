@@ -89,26 +89,16 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
-    // Xác nhận thanh toán thành công (dùng cho COD khi giao hàng hoặc VNPay)
+    /**
+     * Xác nhận thanh toán thành công (dùng cho COD khi giao hàng)
+     */
     public Order confirmPayment(Long orderId) {
-        System.out.println("=== confirmPayment method called for Order #" + orderId + " ===");
-
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id " + orderId));
 
-        System.out.println("Current paymentStatus: " + order.getPaymentStatus());
-        System.out.println("Current status: " + order.getStatus());
-
         order.setPaymentStatus("PAID");
         order.setStatus("confirmed"); // Cập nhật status từ pending sang confirmed
-
-        Order savedOrder = orderRepository.save(order);
-
-        System.out.println("Updated paymentStatus: " + savedOrder.getPaymentStatus());
-        System.out.println("Updated status: " + savedOrder.getStatus());
-        System.out.println("=== Order #" + orderId + " payment confirmed and saved ===");
-
-        return savedOrder;
+        return orderRepository.save(order);
     }
 
     /**

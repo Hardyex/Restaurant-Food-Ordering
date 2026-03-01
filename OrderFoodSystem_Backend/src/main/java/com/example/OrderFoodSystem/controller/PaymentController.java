@@ -1,4 +1,3 @@
-
 package com.example.OrderFoodSystem.controller;
 
 import com.example.OrderFoodSystem.service.VNPayService;
@@ -15,12 +14,11 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/payment")
-@CrossOrigin(origins = "*")
 public class PaymentController {
 
     @Autowired
     private VNPayService vnPayService;
-
+    
     @Autowired
     private OrderService orderService;
 
@@ -34,7 +32,7 @@ public class PaymentController {
             // Cập nhật paymentMethod của order thành VNPAY
             Long orderIdLong = Long.parseLong(orderId);
             orderService.updatePaymentMethod(orderIdLong, "VNPAY");
-
+            
             String ipAddress = getIpAddress(request);
             String paymentUrl = vnPayService.createPaymentUrl(amount, orderInfo, ipAddress, orderId);
             return ResponseEntity.ok(paymentUrl);
@@ -50,13 +48,12 @@ public class PaymentController {
     @GetMapping("/vnpay/return")
     public ResponseEntity<Map<String, Object>> paymentReturn(@RequestParam Map<String, String> params) {
         Map<String, Object> response = new HashMap<>();
-
+        
         System.out.println("=== VNPay Return URL ===");
-        System.out.println("All params: " + params);
-
+        System.out.println("Params: " + params);
+        
         boolean isValid = vnPayService.verifyPayment(params);
-        System.out.println("Signature valid: " + isValid);
-
+        
         if (isValid) {
             String responseCode = params.get("vnp_ResponseCode");
             String transactionNo = params.get("vnp_TransactionNo");
@@ -64,21 +61,15 @@ public class PaymentController {
             String amount = params.get("vnp_Amount");
             String bankCode = params.get("vnp_BankCode");
             String payDate = params.get("vnp_PayDate");
-
-            System.out.println("Response Code: " + responseCode);
-            System.out.println("TxnRef: " + txnRef);
-
+            
             if ("00".equals(responseCode)) {
                 // Thanh toán thành công - Cập nhật trạng thái đơn hàng
                 try {
                     // Parse orderId từ txnRef (format: orderId_timestamp hoặc chỉ orderId)
-                    String orderIdStr = txnRef.contains("_") ? txnRef.split("_")[0] : txnRef;
-                    Long orderId = Long.parseLong(orderIdStr);
-
-                    System.out.println("=== Confirming payment for Order #" + orderId + " ===");
+                    Long orderId = Long.parseLong(txnRef.split("_")[0]);
                     orderService.confirmPayment(orderId);
-                    System.out.println("Order #" + orderId + " payment confirmed successfully!");
-
+                    System.out.println("Order #" + orderId + " payment confirmed");
+                    
                     response.put("status", "success");
                     response.put("message", "Thanh toán thành công");
                     response.put("orderId", orderId);
@@ -87,67 +78,56 @@ public class PaymentController {
                     response.put("amount", Long.parseLong(amount) / 100); // Chia 100 để lấy số tiền gốc
                     response.put("bankCode", bankCode);
                     response.put("payDate", payDate);
-
-                } catch (NumberFormatException e) {
-                    System.err.println(" Error parsing orderId from txnRef: " + txnRef);
-                    e.printStackTrace();
-                    response.put("status", "error");
-                    response.put("message", "Lỗi parse orderId: " + e.getMessage());
                 } catch (Exception e) {
-                    System.err.println(" Error updating order: " + e.getMessage());
-                    e.printStackTrace();
+                    System.err.println("Error updating order: " + e.getMessage());
                     response.put("status", "error");
                     response.put("message", "Lỗi cập nhật đơn hàng: " + e.getMessage());
                 }
             } else {
                 // Thanh toán thất bại
                 try {
-                    String orderIdStr = txnRef.contains("_") ? txnRef.split("_")[0] : txnRef;
-                    Long orderId = Long.parseLong(orderIdStr);
+                    Long orderId = Long.parseLong(txnRef.split("_")[0]);
                     orderService.failPayment(orderId, "VNPay response code: " + responseCode);
-                    System.out.println(" Order #" + orderId + " payment failed with code: " + responseCode);
+                    System.out.println("Order #" + orderId + " payment failed");
                 } catch (Exception e) {
                     System.err.println("Error updating failed order: " + e.getMessage());
-                    e.printStackTrace();
                 }
-
+                
                 response.put("status", "failed");
                 response.put("message", "Thanh toán thất bại");
                 response.put("responseCode", responseCode);
             }
         } else {
-            System.err.println(" Invalid signature!");
             response.put("status", "error");
             response.put("message", "Chữ ký không hợp lệ");
         }
-
-        System.out.println("=== Response: " + response + " ===");
+        
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/vnpay/ipn")
     public ResponseEntity<Map<String, Object>> paymentIPN(@RequestParam Map<String, String> params) {
         Map<String, Object> response = new HashMap<>();
-
+        
         boolean isValid = vnPayService.verifyPayment(params);
-
+        
         if (isValid) {
             String responseCode = params.get("vnp_ResponseCode");
             String transactionNo = params.get("vnp_TransactionNo");
             String txnRef = params.get("vnp_TxnRef");
             String amount = params.get("vnp_Amount");
-
+            
             if ("00".equals(responseCode)) {
                 // Kiểm tra đơn hàng tồn tại trong DB
                 // Kiểm tra số tiền thanh toán có đúng không
                 // Kiểm tra trạng thái đơn hàng (chưa được xử lý)
                 // Cập nhật trạng thái đơn hàng thành công
-
+                
                 // TODO: Implement logic cập nhật database
                 System.out.println("IPN: Payment success for order " + txnRef);
                 System.out.println("Transaction No: " + transactionNo);
                 System.out.println("Amount: " + Long.parseLong(amount) / 100);
-
+                
                 response.put("RspCode", "00");
                 response.put("Message", "Confirm Success");
             } else {
@@ -160,7 +140,7 @@ public class PaymentController {
             response.put("RspCode", "97");
             response.put("Message", "Invalid Signature");
         }
-
+        
         return ResponseEntity.ok(response);
     }
 
