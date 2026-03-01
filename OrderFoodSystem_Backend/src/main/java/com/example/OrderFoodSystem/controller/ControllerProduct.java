@@ -9,20 +9,20 @@ import org.springframework.web.bind.annotation.*;
 import com.example.OrderFoodSystem.entity.Product;
 import com.example.OrderFoodSystem.repository.ProductRepository;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.File;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
 
 @RestController
 @RequestMapping("products")
 public class ControllerProduct {
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private Cloudinary cloudinary;
 
     @PostMapping
     public Product newProduct(
@@ -145,22 +145,12 @@ public class ControllerProduct {
             throw new RuntimeException("Only image files are allowed");
         }
 
-        File uploadDir = new File("uploads");
-        if (!uploadDir.exists()) {
-            uploadDir.mkdirs();
+        try {
+            // Upload to Cloudinary
+            Map uploadResult = cloudinary.uploader().upload(image.getBytes(), ObjectUtils.emptyMap());
+            return uploadResult.get("secure_url").toString();
+        } catch (IOException e) {
+            throw new RuntimeException("Image upload failed", e);
         }
-
-        String originalFilename = image.getOriginalFilename();
-        String extension = "";
-        if (originalFilename != null && originalFilename.contains(".")) {
-            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-        }
-
-        String newFilename = UUID.randomUUID().toString() + extension;
-
-        Path path = Paths.get("uploads", newFilename);
-        Files.copy(image.getInputStream(), path);
-
-        return "http://localhost:8080/uploads/" + newFilename;
     }
 }

@@ -18,13 +18,14 @@ public class VNPayService {
     @Autowired
     private VNPayConfig vnPayConfig;
 
-    public String createPaymentUrl(long amount, String orderInfo, String ipAddress, String orderId) throws UnsupportedEncodingException {
+    public String createPaymentUrl(long amount, String orderInfo, String ipAddress, String orderId)
+            throws UnsupportedEncodingException {
         String vnp_Version = "2.1.0";
         String vnp_Command = "pay";
         String vnp_TxnRef = orderId + "_" + System.currentTimeMillis(); // orderId_timestamp
         String vnp_IpAddr = ipAddress;
         String vnp_TmnCode = vnPayConfig.getTmnCode();
-        
+
         Map<String, String> vnp_Params = new HashMap<>();
         vnp_Params.put("vnp_Version", vnp_Version);
         vnp_Params.put("vnp_Command", vnp_Command);
@@ -38,11 +39,13 @@ public class VNPayService {
         vnp_Params.put("vnp_ReturnUrl", vnPayConfig.getReturnUrl());
         vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
 
-        Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
+        // Fix timezone: Use Asia/Ho_Chi_Minh for Vietnam (GMT+7)
+        Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+        formatter.setTimeZone(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
         String vnp_CreateDate = formatter.format(cld.getTime());
         vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
-        
+
         cld.add(Calendar.MINUTE, 15);
         String vnp_ExpireDate = formatter.format(cld.getTime());
         vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);
