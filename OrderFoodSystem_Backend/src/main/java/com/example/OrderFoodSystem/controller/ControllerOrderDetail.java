@@ -14,7 +14,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/orderDetails")
-@CrossOrigin("*")
 public class ControllerOrderDetail {
 
 

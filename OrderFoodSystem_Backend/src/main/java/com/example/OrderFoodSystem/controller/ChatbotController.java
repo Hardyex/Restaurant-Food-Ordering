@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/chatbot")
-@CrossOrigin("*")
 public class ChatbotController {
 
     @Autowired

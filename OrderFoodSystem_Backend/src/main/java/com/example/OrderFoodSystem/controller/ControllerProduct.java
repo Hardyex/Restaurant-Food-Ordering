@@ -20,7 +20,6 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("products")
-@CrossOrigin("*")
 public class ControllerProduct {
     @Autowired
     private ProductRepository productRepository;

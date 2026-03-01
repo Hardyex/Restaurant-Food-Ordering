@@ -15,7 +15,6 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/vouchers")
-@CrossOrigin(origins = "*")
 public class ControllerVoucher {
 
     @Autowired
