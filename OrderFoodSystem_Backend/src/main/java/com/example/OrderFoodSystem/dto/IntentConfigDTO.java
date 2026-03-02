@@ -1,9 +1,11 @@
 package com.example.OrderFoodSystem.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 
 public class IntentConfigDTO {
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Root {
         private ChatbotData chatbot_training_data;
 
@@ -16,6 +18,7 @@ public class IntentConfigDTO {
         }
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ChatbotData {
         private List<Intent> intents;
 
@@ -28,6 +31,7 @@ public class IntentConfigDTO {
         }
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Intent {
         private String intent;
         private List<String> user_utterances;

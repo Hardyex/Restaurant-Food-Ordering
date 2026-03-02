@@ -57,11 +57,11 @@ public class ChatbotService {
                 .detectIntent(message);
         if (intentResult.isPresent()) {
             String intentName = intentResult.get().getIntent();
-            // Only use JSON response if it's NOT a transactional intent handled by existing
-            // logic
+            response.setReply(intentResult.get().getReply());
+            response.setIntent(intentName);
+
+            // Only return early if it's NOT a transactional intent
             if (!transactionalIntents.contains(intentName)) {
-                response.setReply(intentResult.get().getReply());
-                response.setIntent(intentName);
                 return response;
             }
         }
@@ -101,7 +101,8 @@ public class ChatbotService {
         session.setLastProductList(products);
         session.setLastIntent("FIND_PRODUCTS");
 
-        response.setReply("Đây là một số món ngon tại nhà hàng chúng mình:");
+        String prefix = (response.getReply() != null) ? response.getReply() + "\n\n" : "";
+        response.setReply(prefix + "Đây là một số món ngon tại nhà hàng chúng mình:");
         response.setProducts(products);
         response.setSuggestions(Arrays.asList("Món bán chạy", "Giá dưới 50k", "Xem giỏ hàng"));
         response.setIntent("FIND_PRODUCTS");
@@ -164,7 +165,8 @@ public class ChatbotService {
         session.setLastProductList(products);
         session.setLastIntent("GET_BEST_SELLERS");
 
-        response.setReply("Đây là những món được yêu thích nhất:");
+        String prefix = (response.getReply() != null) ? response.getReply() + "\n\n" : "";
+        response.setReply(prefix + "Đây là những món được yêu thích nhất:");
         response.setProducts(products);
         response.setIntent("GET_BEST_SELLERS");
         return response;
@@ -242,11 +244,12 @@ public class ChatbotService {
                 .sorted((a, b) -> b.getIdOrder().compareTo(a.getIdOrder()))
                 .collect(Collectors.toList());
 
+        String prefix = (response.getReply() != null) ? response.getReply() + "\n\n" : "";
         if (orders.isEmpty()) {
-            response.setReply("Bạn chưa có đơn hàng nào được đặt.");
+            response.setReply(prefix + "Bạn chưa có đơn hàng nào được đặt.");
         } else {
             Order lastOrder = orders.get(0);
-            response.setReply("Đơn hàng #" + lastOrder.getIdOrder() + " của bạn đang có trạng thái: "
+            response.setReply(prefix + "Đơn hàng #" + lastOrder.getIdOrder() + " của bạn đang có trạng thái: "
                     + translateStatus(lastOrder.getStatus()));
         }
         response.setIntent("ORDER_STATUS");

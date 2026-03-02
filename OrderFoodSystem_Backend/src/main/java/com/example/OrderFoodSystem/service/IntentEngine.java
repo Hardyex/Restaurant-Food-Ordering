@@ -34,6 +34,7 @@ public class IntentEngine {
             }
         } catch (IOException e) {
             System.err.println("Failed to load chatbot training data: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -45,17 +46,32 @@ public class IntentEngine {
         String normalizedMessage = message.toLowerCase().trim();
 
         for (IntentConfigDTO.Intent intent : intents) {
-            // Check for exact matches or partial matches in user_utterances
-            boolean match = intent.getUser_utterances().stream()
+            // Priority 1: Exact whole-word matches
+            boolean exactMatch = intent.getUser_utterances().stream()
+                    .anyMatch(u -> normalizedMessage.equalsIgnoreCase(u.trim()));
+
+            if (exactMatch) {
+                return generateResult(intent);
+            }
+
+            // Priority 2: Message contains user utterance or vice versa
+            boolean partialMatch = intent.getUser_utterances().stream()
                     .anyMatch(u -> normalizedMessage.contains(u.toLowerCase())
                             || u.toLowerCase().contains(normalizedMessage));
 
-            if (match && intent.getResponses() != null && !intent.getResponses().isEmpty()) {
-                String randomResponse = intent.getResponses().get(random.nextInt(intent.getResponses().size()));
-                return Optional.of(new IntentConfigDTO.IntentResult(randomResponse, intent.getIntent()));
+            if (partialMatch) {
+                return generateResult(intent);
             }
         }
 
+        return Optional.empty();
+    }
+
+    private Optional<IntentConfigDTO.IntentResult> generateResult(IntentConfigDTO.Intent intent) {
+        if (intent.getResponses() != null && !intent.getResponses().isEmpty()) {
+            String randomResponse = intent.getResponses().get(random.nextInt(intent.getResponses().size()));
+            return Optional.of(new IntentConfigDTO.IntentResult(randomResponse, intent.getIntent()));
+        }
         return Optional.empty();
     }
 }
