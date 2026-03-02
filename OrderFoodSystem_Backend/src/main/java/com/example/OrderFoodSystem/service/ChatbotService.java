@@ -31,6 +31,12 @@ public class ChatbotService {
     @Autowired
     private OrderService orderService;
 
+    @Autowired
+    private IntentEngine intentEngine;
+
+    private final List<String> transactionalIntents = Arrays.asList(
+            "view_menu", "order_tracking", "popular_dishes", "order_modification");
+
     private final Map<String, ChatSession> sessions = new ConcurrentHashMap<>();
 
     public ChatbotDTO.Response processQuery(ChatbotDTO.Request request) {
@@ -45,6 +51,20 @@ public class ChatbotService {
         session.updateLastSeen();
 
         ChatbotDTO.Response response = new ChatbotDTO.Response();
+
+        // Phase 0: External Intent Engine (JSON-based)
+        Optional<com.example.OrderFoodSystem.dto.IntentConfigDTO.IntentResult> intentResult = intentEngine
+                .detectIntent(message);
+        if (intentResult.isPresent()) {
+            String intentName = intentResult.get().getIntent();
+            // Only use JSON response if it's NOT a transactional intent handled by existing
+            // logic
+            if (!transactionalIntents.contains(intentName)) {
+                response.setReply(intentResult.get().getReply());
+                response.setIntent(intentName);
+                return response;
+            }
+        }
 
         // Phase 1: Intent Detection (Rule-based)
         if (isMatch(message, "menu", "món gì", "danh sách", "thực đơn")) {
